@@ -1,26 +1,12 @@
 import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
+import { validateEnv } from "./config/env.js";
+validateEnv();
 import { connectDB } from "./config/db.js";
-import authRoutes from "./routes/authRoutes.js";
+import { createApp } from "./app.js";
 import User from "./models/User.js";
 import bcrypt from "bcryptjs";
 
-const app = express();
-
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
-
-app.get("/health", (req, res) => res.json({ status: "ok", service: "auth-service" }));
-
-app.use("/api/auth", authRoutes);
-
-app.use((req, res) => res.status(404).json({ message: "Route not found" }));
-
+const app = createApp();
 const PORT = process.env.PORT || 4001;
 
 async function seedAdmin() {

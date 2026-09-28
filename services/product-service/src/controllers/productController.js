@@ -10,6 +10,12 @@ function handleValidation(req, res) {
   return false;
 }
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const PRODUCT_UPDATE_FIELDS = ["name", "description", "price", "stock", "category", "image_url"];
+
 export async function getProducts(req, res) {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
@@ -19,9 +25,10 @@ export async function getProducts(req, res) {
     const filter = {};
     if (req.query.category) filter.category = req.query.category;
     if (req.query.search) {
+      const escaped = escapeRegex(req.query.search);
       filter.$or = [
-        { name: { $regex: req.query.search, $options: "i" } },
-        { description: { $regex: req.query.search, $options: "i" } },
+        { name: { $regex: escaped, $options: "i" } },
+        { description: { $regex: escaped, $options: "i" } },
       ];
     }
 
@@ -78,7 +85,11 @@ export async function createProduct(req, res) {
 export async function updateProduct(req, res) {
   if (handleValidation(req, res)) return;
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const update = {};
+    for (const field of PRODUCT_UPDATE_FIELDS) {
+      if (field in req.body) update[field] = req.body[field];
+    }
+    const product = await Product.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     });

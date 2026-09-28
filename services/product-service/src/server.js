@@ -1,25 +1,11 @@
 import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
+import { validateEnv } from "./config/env.js";
+validateEnv();
 import { connectDB } from "./config/db.js";
-import productRoutes from "./routes/productRoutes.js";
+import { createApp } from "./app.js";
 import Product from "./models/Product.js";
 
-const app = express();
-
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
-
-app.get("/health", (req, res) => res.json({ status: "ok", service: "product-service" }));
-
-app.use("/api/products", productRoutes);
-
-app.use((req, res) => res.status(404).json({ message: "Route not found" }));
-
+const app = createApp();
 const PORT = process.env.PORT || 4002;
 
 async function seedProducts() {
