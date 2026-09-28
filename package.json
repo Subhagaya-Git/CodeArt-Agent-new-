@@ -1,0 +1,19 @@
+{
+  "name": "shophub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ShopHub - mid-level E-Commerce app built as a modular microservices system (gateway + auth + product + cart + order) with React frontend.",
+  "scripts": {
+    "dev:auth": "npm --prefix services/auth-service run dev",
+    "dev:product": "npm --prefix services/product-service run dev",
+    "dev:cart": "npm --prefix services/cart-service run dev",
+    "dev:order": "npm --prefix services/order-service run dev",
+    "dev:gateway": "npm --prefix services/gateway run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "install:all": "npm --prefix services/auth-service install && npm --prefix services/product-service install && npm --prefix services/cart-service install && npm --prefix services/order-service install && npm --prefix services/gateway install && npm --prefix frontend install",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "keywords": ["ecommerce", "microservices", "node", "express", "react", "mongodb", "docker"],
+  "license": "MIT"
+}
