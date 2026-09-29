@@ -7,7 +7,10 @@ import productRoutes from "./routes/productRoutes.js";
 export function createApp() {
   const app = express();
 
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+  }));
   app.use(cors());
   app.use(express.json());
   app.use(morgan("dev"));

@@ -8,6 +8,8 @@ import {
   updateProduct,
   deleteProduct,
   addReview,
+  reserveStock,
+  restoreStock,
   stats,
 } from "../controllers/productController.js";
 import { authenticate, requireAdmin } from "../middleware/auth.js";
@@ -25,6 +27,9 @@ router.get("/", getProducts);
 router.get("/categories", getCategories);
 router.get("/stats", stats);
 router.get("/:id", getProductById);
+
+router.post("/reserve-stock", reserveStock);
+router.post("/restore-stock", restoreStock);
 
 router.post("/", authenticate, requireAdmin, productValidation, createProduct);
 router.put("/:id", authenticate, requireAdmin, productValidation, updateProduct);

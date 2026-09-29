@@ -1,0 +1,9 @@
+node_modules
+.env
+npm-debug.log
+Dockerfile
+.dockerignore
+tests
+jest.config.js
+.git
+.gitignore

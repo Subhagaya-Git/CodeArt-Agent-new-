@@ -1,4 +1,5 @@
 import { validationResult } from "express-validator";
+import mongoose from "mongoose";
 import Product from "../models/Product.js";
 
 function handleValidation(req, res) {
@@ -128,6 +129,68 @@ export async function addReview(req, res) {
     res.status(201).json({ message: "Review added", product });
   } catch (err) {
     res.status(500).json({ message: "Failed to add review", error: err.message });
+  }
+}
+
+export async function reserveStock(req, res) {
+  const { items } = req.body;
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: "Items array is required" });
+  }
+  for (const item of items) {
+    if (!item.product_id || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+      return res.status(400).json({ message: "Each item needs product_id and positive integer quantity" });
+    }
+  }
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    const reserved = [];
+    for (const item of items) {
+      const product = await Product.findById(item.product_id).session(session);
+      if (!product) {
+        throw new Error(`Product ${item.product_id} not found`);
+      }
+      if (product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
+      }
+      product.stock -= item.quantity;
+      await product.save({ session });
+      reserved.push({ product_id: item.product_id, name: product.name, remaining_stock: product.stock });
+    }
+    await session.commitTransaction();
+    res.json({ message: "Stock reserved successfully", reserved });
+  } catch (err) {
+    await session.abortTransaction();
+    const status = err.message.includes("Insufficient stock") || err.message.includes("not found") ? 400 : 500;
+    res.status(status).json({ message: "Stock reservation failed", error: err.message });
+  } finally {
+    session.endSession();
+  }
+}
+
+export async function restoreStock(req, res) {
+  const { items } = req.body;
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: "Items array is required" });
+  }
+  try {
+    const restored = [];
+    for (const item of items) {
+      const product = await Product.findByIdAndUpdate(
+        item.product_id,
+        { $inc: { stock: item.quantity } },
+        { new: true }
+      );
+      if (!product) {
+        restored.push({ product_id: item.product_id, restored: false, error: "Product not found" });
+      } else {
+        restored.push({ product_id: item.product_id, name: product.name, remaining_stock: product.stock });
+      }
+    }
+    res.json({ message: "Stock restored successfully", restored });
+  } catch (err) {
+    res.status(500).json({ message: "Stock restoration failed", error: err.message });
   }
 }
 

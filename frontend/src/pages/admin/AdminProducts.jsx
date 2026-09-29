@@ -15,7 +15,7 @@ export default function AdminProducts() {
     setLoading(true);
     api
       .get("/products", { params: { limit: 50 } })
-      .then(({ data }) => setProducts(data.products))
+      .then(({ data }) => setProducts(data.products || []))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }
@@ -139,7 +139,7 @@ export default function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {(products || []).map((p) => (
                 <tr key={p._id} className="border-b">
                   <td className="p-3">{p.name}</td>
                   <td className="p-3">{p.category}</td>

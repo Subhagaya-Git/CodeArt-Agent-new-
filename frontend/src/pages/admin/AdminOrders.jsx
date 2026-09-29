@@ -20,7 +20,7 @@ export default function AdminOrders() {
     setLoading(true);
     api
       .get("/orders", { params: status ? { status } : {} })
-      .then(({ data }) => setOrders(data.orders))
+      .then(({ data }) => setOrders(data.orders || []))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }
@@ -59,7 +59,7 @@ export default function AdminOrders() {
         <div className="text-center text-gray-500 py-12">No orders found.</div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
+          {(orders || []).map((order) => (
             <div key={order._id} className="card p-5">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div>
@@ -85,7 +85,7 @@ export default function AdminOrders() {
                 </div>
               </div>
               <div className="space-y-1">
-                {order.items.map((item) => (
+                {(order.items || []).map((item) => (
                   <div key={item.product_id} className="flex justify-between text-sm text-gray-700">
                     <span>{item.name} × {item.quantity}</span>
                     <span>${(item.price * item.quantity).toFixed(2)}</span>

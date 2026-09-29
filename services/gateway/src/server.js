@@ -10,9 +10,12 @@ import apiRoutes from "./routes/index.js";
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(corsMiddleware);
-app.use(express.json());
+
 app.use(morgan("dev"));
 app.use(apiLimiter);
 
@@ -23,4 +26,23 @@ app.use("/api", apiRoutes);
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`[gateway] running on port ${PORT}`));
+const server = app.listen(PORT, "0.0.0.0", () => console.log(`[gateway] running on port ${PORT}`));
+server.on("error", (err) => {
+  console.error("[gateway] Server error:", err.message);
+  process.exit(1);
+});
+
+function gracefulShutdown(signal) {
+  console.log(`[gateway] ${signal} received, shutting down gracefully...`);
+  server.close(() => {
+    console.log("[gateway] HTTP server closed");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error("[gateway] Forced shutdown after 10s timeout");
+    process.exit(1);
+  }, 10000);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

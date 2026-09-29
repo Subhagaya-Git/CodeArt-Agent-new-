@@ -27,33 +27,52 @@ export async function checkout(req, res) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    for (const item of cartData.items) {
-      const { data } = await axios.get(`${PRODUCT_SERVICE_URL}/api/products/${item.product_id}`);
-      if (data.product.stock < item.quantity) {
-        return res.status(400).json({
-          message: `Insufficient stock for ${item.name}. Available: ${data.product.stock}`,
-        });
-      }
+    const stockItems = cartData.items.map((i) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+    }));
+
+    try {
+      await axios.post(`${PRODUCT_SERVICE_URL}/api/products/reserve-stock`, { items: stockItems });
+    } catch (reserveErr) {
+      const status = reserveErr.response?.status || 500;
+      const message = reserveErr.response?.data?.error || reserveErr.response?.data?.message || "Stock reservation failed";
+      return res.status(status).json({ message, sagaStep: "reserve-stock" });
     }
 
-    const order = await Order.create({
-      user_id: req.user.id,
-      items: cartData.items.map((i) => ({
-        product_id: i.product_id,
-        name: i.name,
-        quantity: i.quantity,
-        price: i.price,
-        image_url: i.image_url,
-      })),
-      total_price: cartData.total,
-      status: "Pending",
-      shipping: req.body.shipping,
-      payment_method: "mock",
-    });
+    let order;
+    try {
+      order = await Order.create({
+        user_id: req.user.id,
+        items: cartData.items.map((i) => ({
+          product_id: i.product_id,
+          name: i.name,
+          quantity: i.quantity,
+          price: i.price,
+          image_url: i.image_url,
+        })),
+        total_price: cartData.total,
+        status: "Pending",
+        shipping: req.body.shipping,
+        payment_method: "mock",
+      });
+    } catch (orderErr) {
+      console.error("[saga] Order creation failed, compensating with stock restore:", orderErr.message);
+      try {
+        await axios.post(`${PRODUCT_SERVICE_URL}/api/products/restore-stock`, { items: stockItems });
+      } catch (restoreErr) {
+        console.error("[saga] CRITICAL: Stock restore also failed:", restoreErr.message);
+      }
+      return res.status(500).json({ message: "Order creation failed, stock restored", error: orderErr.message, sagaStep: "create-order" });
+    }
 
-    await axios.delete(`${CART_SERVICE_URL}/api/cart`, {
-      headers: { Authorization: authHeader },
-    });
+    try {
+      await axios.delete(`${CART_SERVICE_URL}/api/cart`, {
+        headers: { Authorization: authHeader },
+      });
+    } catch (cartErr) {
+      console.warn("[saga] Cart clear failed (non-critical, order is valid):", cartErr.message);
+    }
 
     res.status(201).json({
       message: "Order placed successfully (mock payment confirmed)",

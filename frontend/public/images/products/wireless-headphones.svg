@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#2a2a35"/>
+      <stop offset="100%" stop-color="#1a1a22"/>
+    </radialGradient>
+    <linearGradient id="band" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a3a45"/>
+      <stop offset="50%" stop-color="#2a2a32"/>
+      <stop offset="100%" stop-color="#1a1a22"/>
+    </linearGradient>
+    <radialGradient id="cup" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#3a3a45"/>
+      <stop offset="60%" stop-color="#252530"/>
+      <stop offset="100%" stop-color="#15151c"/>
+    </radialGradient>
+    <radialGradient id="cushion" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1a22"/>
+      <stop offset="80%" stop-color="#0a0a12"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="540" rx="160" ry="15" fill="#000" opacity="0.4"/>
+  <path d="M 180 280 Q 180 180 300 170 Q 420 180 420 280" fill="none" stroke="url(#band)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 180 280 Q 180 185 300 175 Q 420 185 420 280" fill="none" stroke="#4a4a55" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <ellipse cx="180" cy="310" rx="65" ry="80" fill="url(#cup)"/>
+  <ellipse cx="420" cy="310" rx="65" ry="80" fill="url(#cup)"/>
+  <ellipse cx="180" cy="315" rx="48" ry="62" fill="url(#cushion)"/>
+  <ellipse cx="420" cy="315" rx="48" ry="62" fill="url(#cushion)"/>
+  <ellipse cx="180" cy="310" rx="65" ry="80" fill="none" stroke="#4a4a55" stroke-width="2" opacity="0.6"/>
+  <ellipse cx="420" cy="310" rx="65" ry="80" fill="none" stroke="#4a4a55" stroke-width="2" opacity="0.6"/>
+  <circle cx="165" cy="295" r="4" fill="#5a5a65" opacity="0.7"/>
+  <circle cx="435" cy="295" r="4" fill="#5a5a65" opacity="0.7"/>
+  <rect x="285" y="165" width="30" height="8" rx="4" fill="#4a4a55" opacity="0.8"/>
+</svg>
