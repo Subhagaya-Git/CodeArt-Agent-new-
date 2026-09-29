@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/axios.js";
+import { createContext, useContext, useEffect, useState } from 'react';
+import api from '../api/axios.js';
+import { setAuthToken, clearAuthToken } from '../api/tokenStore.js';
 
 const AuthContext = createContext(null);
 
@@ -9,46 +10,58 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    if (storedToken && storedUser) {
+    async function restoreSession() {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        const { data } = await api.post('/auth/refresh');
+        if (data?.token && data?.user) {
+          setAuthToken(data.token);
+          setToken(data.token);
+          setUser(data.user);
+        }
       } catch {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        // No active session — user must log in.
+      } finally {
+        setLoading(false);
       }
     }
-    setLoading(false);
+
+    restoreSession();
+  }, []);
+
+  useEffect(() => {
+    function handleAuthExpired() {
+      clearAuthToken();
+      setToken(null);
+      setUser(null);
+    }
+
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
   }, []);
 
   async function login(email, password) {
-    const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    const { data } = await api.post('/auth/login', { email, password });
+    setAuthToken(data.token);
     setToken(data.token);
     setUser(data.user);
     return data.user;
   }
 
   async function register(name, email, password) {
-    const { data } = await api.post("/auth/register", { name, email, password });
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    const { data } = await api.post('/auth/register', { name, email, password });
+    setAuthToken(data.token);
     setToken(data.token);
     setUser(data.user);
     return data.user;
   }
 
   function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearAuthToken();
     setToken(null);
     setUser(null);
   }
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === 'admin';
 
   return (
     <AuthContext.Provider value={{ user, token, isAdmin, loading, login, register, logout }}>
@@ -59,6 +72,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
