@@ -42,7 +42,7 @@ services:
   auth-service:
     build: ./services/auth-service
     container_name: shophub-auth
-    env_file: ./services/auth-service/.env
+
     environment:
       - MONGO_URI=mongodb://mongodb:27017/auth_db?replicaSet=rs0
       - JWT_SECRET=${JWT_SECRET}
@@ -68,7 +68,7 @@ services:
   product-service:
     build: ./services/product-service
     container_name: shophub-product
-    env_file: ./services/product-service/.env
+
     environment:
       - MONGO_URI=mongodb://mongodb:27017/product_db?replicaSet=rs0
       - JWT_SECRET=${JWT_SECRET}
@@ -94,7 +94,7 @@ services:
   cart-service:
     build: ./services/cart-service
     container_name: shophub-cart
-    env_file: ./services/cart-service/.env
+
     environment:
       - MONGO_URI=mongodb://mongodb:27017/cart_db?replicaSet=rs0
       - JWT_SECRET=${JWT_SECRET}
@@ -123,7 +123,7 @@ services:
   order-service:
     build: ./services/order-service
     container_name: shophub-order
-    env_file: ./services/order-service/.env
+
     environment:
       - MONGO_URI=mongodb://mongodb:27017/order_db?replicaSet=rs0
       - JWT_SECRET=${JWT_SECRET}
@@ -155,7 +155,7 @@ services:
   gateway:
     build: ./services/gateway
     container_name: shophub-gateway
-    env_file: ./services/gateway/.env
+
     environment:
       - PORT=4000
       - AUTH_SERVICE_URL=http://auth-service:4001

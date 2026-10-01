@@ -17,15 +17,55 @@ Mid-level E-Commerce web application built as a modular microservices system for
 
 Each service owns its own MongoDB database and is independently runnable. Services communicate over plain REST/HTTP. JWT is verified with a shared secret (`JWT_SECRET`) — no round-trip to Auth Service on every request.
 
-## Quick start (Docker)
+## Prerequisites
+
+- **Docker** 20.10+ with the Compose v2 plugin (`docker compose version` should print a version)
+- That's it for the Docker path. For local dev without Docker: **Node 18+** and a local MongoDB on `mongodb://localhost:27017`.
+
+## Quick start (Docker) — standalone, no CodeArts or extra tooling required
 
 ```bash
-cp .env.example .env        # then edit JWT_SECRET
+# 1. Clone the repo
+git clone <your-remote-url> shophub
+cd shophub
+
+# 2. Create your env file and set a real JWT secret
+cp .env.example .env
+#    Edit .env and replace JWT_SECRET with a long random string, e.g.:
+#    node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+
+# 3. Build and start every service + MongoDB + Redis + frontend
 docker compose up --build
+
+# 4. Stop everything (leaves data intact)
+docker compose down
+
+#    Reset the database too:
+docker compose down -v
 ```
 
-- Frontend: http://localhost:5173
-- Gateway API: http://localhost:4000
+Once all containers report `healthy`, open:
+
+- **Frontend:** http://localhost:5173
+- **Gateway API:** http://localhost:4000
+- **MongoDB:** localhost:27017 (replica set `rs0`)
+- **Redis:** localhost:6379
+
+The stack is fully self-contained: MongoDB, Redis, all five services, and the
+frontend all run inside containers. No host-side Node or MongoDB is required.
+
+## Default admin (seeded on first start)
+
+On first start, Auth Service seeds an admin user if one does not yet exist:
+
+| Field   | Value                |
+|---------|----------------------|
+| email   | `admin@shophub.com`  |
+| password| `admin12345`         |
+| role    | `admin`              |
+
+Log in at http://localhost:5173/login to access the admin dashboard, product
+CRUD, and order management. **Change this password in any non-demo deployment.**
 
 ## Local development (without Docker)
 
@@ -42,7 +82,9 @@ npm run dev:gateway
 npm run dev:frontend
 ```
 
-Each service reads its own `.env` (see `.env.example` in each service folder). `JWT_SECRET` must match across all services and the gateway.
+Each service reads its own `.env` (see `.env.example` in each service folder —
+copy to `.env` and edit). `JWT_SECRET` must match across all services and the
+gateway. The frontend reads `VITE_API_URL` from `frontend/.env`.
 
 ## Ports
 
@@ -56,11 +98,6 @@ Each service reads its own `.env` (see `.env.example` in each service folder). `
 | Order Service    | 4004 |
 | MongoDB          | 27017 |
 
-## Default admin
-
-On first start, Auth Service seeds an admin user:
-- email: `admin@shophub.com`
-- password: `admin12345`
 
 ## Scope
 
