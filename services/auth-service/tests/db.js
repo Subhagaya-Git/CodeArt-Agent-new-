@@ -9,7 +9,7 @@ const SYSTEM_MONGOD =
 export async function connectTestDB() {
   mongoServer = await MongoMemoryServer.create({
     binary: { systemBinary: SYSTEM_MONGOD },
-    instance: { storageEngine: "wiredTiger", timeout: 60000 },
+    instance: { storageEngine: "wiredTiger", launchTimeout: 60000 },
   });
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);

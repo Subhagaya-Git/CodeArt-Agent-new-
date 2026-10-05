@@ -13,9 +13,9 @@ export function AuthProvider({ children }) {
     async function restoreSession() {
       try {
         const { data } = await api.post('/auth/refresh');
-        if (data?.token && data?.user) {
-          setAuthToken(data.token);
-          setToken(data.token);
+        if (data?.accessToken && data?.user) {
+          setAuthToken(data.accessToken);
+          setToken(data.accessToken);
           setUser(data.user);
         }
       } catch {
@@ -41,21 +41,26 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const { data } = await api.post('/auth/login', { email, password });
-    setAuthToken(data.token);
-    setToken(data.token);
+    setAuthToken(data.accessToken);
+    setToken(data.accessToken);
     setUser(data.user);
     return data.user;
   }
 
   async function register(name, email, password) {
     const { data } = await api.post('/auth/register', { name, email, password });
-    setAuthToken(data.token);
-    setToken(data.token);
+    setAuthToken(data.accessToken);
+    setToken(data.accessToken);
     setUser(data.user);
     return data.user;
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Best effort — clear local state regardless.
+    }
     clearAuthToken();
     setToken(null);
     setUser(null);

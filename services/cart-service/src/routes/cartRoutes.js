@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { body } from "express-validator";
 import {
   getCart,
   addToCart,
@@ -9,25 +8,16 @@ import {
   stats,
 } from "../controllers/cartController.js";
 import { authenticate } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
+import { addToCartSchema, updateQuantitySchema } from "../validation/cartSchemas.js";
 
 const router = Router();
 
 router.use(authenticate);
 
 router.get("/", getCart);
-router.post(
-  "/",
-  [
-    body("product_id").notEmpty().withMessage("product_id is required"),
-    body("quantity").isInt({ min: 1 }).withMessage("Quantity must be a positive integer"),
-  ],
-  addToCart
-);
-router.put(
-  "/:id",
-  [body("quantity").isInt({ min: 1 }).withMessage("Quantity must be a positive integer")],
-  updateQuantity
-);
+router.post("/", validate(addToCartSchema), addToCart);
+router.put("/:id", validate(updateQuantitySchema), updateQuantity);
 router.delete("/:id", removeFromCart);
 router.delete("/", clearCart);
 router.get("/stats", stats);

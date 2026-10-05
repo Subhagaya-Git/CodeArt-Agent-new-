@@ -13,6 +13,10 @@ build/
 .env.production
 .env.staging
 
+# Docker secrets (never commit secret material)
+secrets/*.txt
+secrets/*.key
+
 # Logs
 *.log
 npm-debug.log*

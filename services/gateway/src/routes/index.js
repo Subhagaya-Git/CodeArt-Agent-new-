@@ -1,12 +1,17 @@
 import { Router } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { getDashboardStats } from "../controllers/statsController.js";
+import { readSecret } from "../config/secret.js";
 
 const router = Router();
 
 const proxyOptions = {
   changeOrigin: true,
   on: {
+    proxyReq: (proxyReq) => {
+      const key = readSecret("INTERNAL_API_KEY");
+      if (key) proxyReq.setHeader("x-internal-key", key);
+    },
     error: (err, req, res) => {
       if (!res.headersSent) {
         res.status(502).json({ message: "Service unavailable", error: err.message });

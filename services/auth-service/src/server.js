@@ -1,9 +1,10 @@
 import "dotenv/config";
-import { validateEnv } from "./config/env.js";
+import { validateEnv, adminCredentials } from "./config/env.js";
 validateEnv();
 import mongoose from "mongoose";
 import { connectDB } from "./config/db.js";
 import { createApp } from "./app.js";
+import { closeRedis } from "./config/redis.js";
 import User from "./models/User.js";
 import bcrypt from "bcryptjs";
 
@@ -11,12 +12,15 @@ const app = createApp();
 const PORT = process.env.PORT || 4001;
 
 async function seedAdmin() {
-  const email = "admin@shophub.com";
+  const { email, password } = adminCredentials();
   const existing = await User.findOne({ email });
-  if (existing) return;
-  const hashed = await bcrypt.hash("admin12345", 10);
+  if (existing) {
+    console.log(`[auth-service] Admin user already exists: ${email}`);
+    return;
+  }
+  const hashed = await bcrypt.hash(password, 10);
   await User.create({ name: "Admin", email, password: hashed, role: "admin" });
-  console.log("[auth-service] Seeded admin user: admin@shophub.com / admin12345");
+  console.log(`[auth-service] Seeded admin user from environment: ${email}`);
 }
 
 connectDB().then(seedAdmin);
@@ -35,6 +39,11 @@ function gracefulShutdown(signal) {
       console.log("[auth-service] MongoDB connection closed");
     } catch (e) {
       console.error("[auth-service] Error closing MongoDB:", e.message);
+    }
+    try {
+      await closeRedis();
+    } catch (e) {
+      console.error("[auth-service] Error closing Redis:", e.message);
     }
     console.log("[auth-service] HTTP server closed");
     process.exit(0);

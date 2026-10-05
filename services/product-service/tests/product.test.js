@@ -9,21 +9,23 @@ process.env.NODE_ENV = "test";
 
 const app = createApp();
 
+process.env.INTERNAL_API_KEY = "test_internal_key_1234567890";
+
 function adminToken() {
-  return jwt.sign({ id: "admin123", role: "admin", name: "Admin" }, process.env.JWT_SECRET);
+  return jwt.sign({ sub: "admin123", role: "admin", name: "Admin", typ: "access" }, process.env.JWT_SECRET);
 }
 
 function customerToken() {
-  return jwt.sign({ id: "cust123", role: "customer", name: "Cust" }, process.env.JWT_SECRET);
+  return jwt.sign({ sub: "cust123", role: "customer", name: "Cust", typ: "access" }, process.env.JWT_SECRET);
 }
 
 beforeAll(async () => {
   await connectTestDB();
-});
+}, 60000);
 
 afterAll(async () => {
   await disconnectTestDB();
-});
+}, 60000);
 
 beforeEach(async () => {
   await clearCollections();

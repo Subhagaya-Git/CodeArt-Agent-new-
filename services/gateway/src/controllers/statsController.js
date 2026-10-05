@@ -1,4 +1,5 @@
 import axios from "axios";
+import { readSecret } from "../config/secret.js";
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL;
@@ -7,13 +8,15 @@ const ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL;
 
 export async function getDashboardStats(req, res) {
   const authHeader = req.headers.authorization;
-  const headers = authHeader ? { Authorization: authHeader } : {};
+  const headers = { "x-internal-key": readSecret("INTERNAL_API_KEY") };
+  if (authHeader) headers.Authorization = authHeader;
+  const options = { headers, timeout: 5000 };
 
   const results = await Promise.allSettled([
-    axios.get(`${AUTH_SERVICE_URL}/api/auth/stats`, { headers }),
-    axios.get(`${PRODUCT_SERVICE_URL}/api/products/stats`, { headers }),
-    axios.get(`${CART_SERVICE_URL}/api/cart/stats`, { headers }),
-    axios.get(`${ORDER_SERVICE_URL}/api/orders/admin/stats`, { headers }),
+    axios.get(`${AUTH_SERVICE_URL}/api/auth/stats`, options),
+    axios.get(`${PRODUCT_SERVICE_URL}/api/products/stats`, options),
+    axios.get(`${CART_SERVICE_URL}/api/cart/stats`, options),
+    axios.get(`${ORDER_SERVICE_URL}/api/orders/admin/stats`, options),
   ]);
 
   const [auth, product, cart, order] = results;

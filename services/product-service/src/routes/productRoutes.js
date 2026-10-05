@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { body } from "express-validator";
 import {
   getProducts,
   getProductById,
@@ -13,36 +12,25 @@ import {
   stats,
 } from "../controllers/productController.js";
 import { authenticate, requireAdmin } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
+import { productSchema, reviewSchema, stockItemsSchema } from "../validation/productSchemas.js";
 
 const router = Router();
-
-const productValidation = [
-  body("name").trim().notEmpty().withMessage("Name is required"),
-  body("price").isFloat({ min: 0 }).withMessage("Price must be a non-negative number"),
-  body("stock").isInt({ min: 0 }).withMessage("Stock must be a non-negative integer"),
-  body("category").trim().notEmpty().withMessage("Category is required"),
-];
 
 router.get("/", getProducts);
 router.get("/categories", getCategories);
 router.get("/stats", stats);
 router.get("/:id", getProductById);
 
-router.post("/reserve-stock", reserveStock);
-router.post("/restore-stock", restoreStock);
+// Internal-only stock endpoints (called by order-service). Not exposed publicly
+// by the gateway.
+router.post("/reserve-stock", validate(stockItemsSchema), reserveStock);
+router.post("/restore-stock", validate(stockItemsSchema), restoreStock);
 
-router.post("/", authenticate, requireAdmin, productValidation, createProduct);
-router.put("/:id", authenticate, requireAdmin, productValidation, updateProduct);
+router.post("/", authenticate, requireAdmin, validate(productSchema), createProduct);
+router.put("/:id", authenticate, requireAdmin, validate(productSchema), updateProduct);
 router.delete("/:id", authenticate, requireAdmin, deleteProduct);
 
-router.post(
-  "/:id/reviews",
-  authenticate,
-  [
-    body("rating").isInt({ min: 1, max: 5 }).withMessage("Rating must be between 1 and 5"),
-    body("comment").optional().isString(),
-  ],
-  addReview
-);
+router.post("/:id/reviews", authenticate, validate(reviewSchema), addReview);
 
 export default router;

@@ -1,27 +1,21 @@
-import { validationResult } from "express-validator";
 import axios from "axios";
 import Order from "../models/Order.js";
+import { readSecret } from "../config/secret.js";
+import { VALID_STATUSES } from "../validation/orderSchemas.js";
 
 const CART_SERVICE_URL = process.env.CART_SERVICE_URL;
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL;
 
-const VALID_STATUSES = ["Pending", "Shipped", "Delivered", "Cancelled"];
-
-function handleValidation(req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({ message: "Validation failed", errors: errors.array() });
-    return true;
-  }
-  return false;
+function internalHeaders(extra = {}) {
+  return { "x-internal-key": readSecret("INTERNAL_API_KEY"), ...extra };
 }
 
 export async function checkout(req, res) {
-  if (handleValidation(req, res)) return;
   const authHeader = req.headers.authorization;
   try {
     const { data: cartData } = await axios.get(`${CART_SERVICE_URL}/api/cart`, {
-      headers: { Authorization: authHeader },
+      headers: internalHeaders({ Authorization: authHeader }),
+      timeout: 5000,
     });
     if (!cartData.items || cartData.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
@@ -33,7 +27,11 @@ export async function checkout(req, res) {
     }));
 
     try {
-      await axios.post(`${PRODUCT_SERVICE_URL}/api/products/reserve-stock`, { items: stockItems });
+      await axios.post(
+        `${PRODUCT_SERVICE_URL}/api/products/reserve-stock`,
+        { items: stockItems },
+        { headers: internalHeaders(), timeout: 5000 }
+      );
     } catch (reserveErr) {
       const status = reserveErr.response?.status || 500;
       const message = reserveErr.response?.data?.error || reserveErr.response?.data?.message || "Stock reservation failed";
@@ -59,7 +57,11 @@ export async function checkout(req, res) {
     } catch (orderErr) {
       console.error("[saga] Order creation failed, compensating with stock restore:", orderErr.message);
       try {
-        await axios.post(`${PRODUCT_SERVICE_URL}/api/products/restore-stock`, { items: stockItems });
+        await axios.post(
+          `${PRODUCT_SERVICE_URL}/api/products/restore-stock`,
+          { items: stockItems },
+          { headers: internalHeaders(), timeout: 5000 }
+        );
       } catch (restoreErr) {
         console.error("[saga] CRITICAL: Stock restore also failed:", restoreErr.message);
       }
@@ -68,7 +70,8 @@ export async function checkout(req, res) {
 
     try {
       await axios.delete(`${CART_SERVICE_URL}/api/cart`, {
-        headers: { Authorization: authHeader },
+        headers: internalHeaders({ Authorization: authHeader }),
+        timeout: 5000,
       });
     } catch (cartErr) {
       console.warn("[saga] Cart clear failed (non-critical, order is valid):", cartErr.message);
@@ -128,7 +131,6 @@ export async function getAllOrders(req, res) {
 }
 
 export async function updateOrderStatus(req, res) {
-  if (handleValidation(req, res)) return;
   try {
     const { status } = req.body;
     if (!VALID_STATUSES.includes(status)) {
