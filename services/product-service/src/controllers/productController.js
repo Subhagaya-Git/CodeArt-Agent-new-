@@ -1,15 +1,5 @@
-import { validationResult } from "express-validator";
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
-
-function handleValidation(req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({ message: "Validation failed", errors: errors.array() });
-    return true;
-  }
-  return false;
-}
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -74,7 +64,7 @@ export async function getCategories(_req, res) {
 }
 
 export async function createProduct(req, res) {
-  if (handleValidation(req, res)) return;
+
   try {
     const product = await Product.create(req.body);
     res.status(201).json({ message: "Product created", product });
@@ -84,7 +74,7 @@ export async function createProduct(req, res) {
 }
 
 export async function updateProduct(req, res) {
-  if (handleValidation(req, res)) return;
+
   try {
     const update = {};
     for (const field of PRODUCT_UPDATE_FIELDS) {
@@ -112,7 +102,7 @@ export async function deleteProduct(req, res) {
 }
 
 export async function addReview(req, res) {
-  if (handleValidation(req, res)) return;
+
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
