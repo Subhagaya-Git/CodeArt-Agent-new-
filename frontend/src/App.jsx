@@ -20,7 +20,7 @@ const AdminOrders = lazy(() => import("./pages/admin/AdminOrders.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 function PageLoader() {
-  return <Spinner label="Loading page..." />;
+  return <Spinner label="Loading page now......" />;
 }
 
 export default function App() {
